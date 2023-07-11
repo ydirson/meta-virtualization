@@ -3,7 +3,7 @@ DESCRIPTION = "Tools and utility software for the Xen hypervisor"
 
 COMPATIBLE_HOST = 'i686-.*-linux|(x86_64.*).*-linux|aarch64.*-linux|arm-.*-linux-gnueabi'
 
-inherit setuptools3 update-rc.d systemd deploy
+inherit setuptools3 update-rc.d systemd deploy ocaml findlib
 require xen-blktap.inc
 
 RDEPENDS:${PN} = "\
@@ -62,6 +62,9 @@ RSUGGESTS:${PN}-misc = " \
     ${PN}-xencons \
     ${PN}-xenpvnetboot \
     "
+
+# FIXME
+INSANE_SKIP:${PN}-ocaml-dev += "file-rdeps dev-elf staticdev"
 
 RDEPENDS:${PN}-python = " \
     python3 \
@@ -177,6 +180,7 @@ PACKAGES = " \
     ${PN}-libxlutil-dev \
     ${PN}-livepatch \
     ${PN}-misc \
+    ${PN}-ocaml-dev \
     ${PN}-pygrub \
     ${PN}-python \
     ${PN}-remus \
@@ -201,6 +205,7 @@ PACKAGES = " \
     ${PN}-xenstat \
     ${PN}-xenstore \
     ${PN}-xenstored \
+    ${PN}-oxenstored \
     ${PN}-xentrace \
     ${PN}-xen-watchdog \
     ${PN}-xl \
@@ -222,6 +227,7 @@ PROVIDES =+ " \
 # There are multiple implementations of the XenStore daemon, so we use a
 # virtual package to allow for substitution.
 RPROVIDES:${PN}-xenstored = "virtual/xenstored"
+RPROVIDES:${PN}-oxenstored = "virtual/xenstored"
 
 FILES:${PN}-dbg += "\
     ${libdir}/xen/bin/.debug \
@@ -386,6 +392,10 @@ FILES:${PN}-libfsimage-dev = " \
     ${datadir}/pkgconfig/fsimage.pc \
     ${libdir}/pkgconfig/xenfsimage.pc \
     ${datadir}/pkgconfig/xenfsimage.pc \
+    "
+
+FILES:${PN}-ocaml-dev = " \
+    ${libdir}/ocaml/site-lib/ \
     "
 
 FILES:${PN}-fsimage = " \
@@ -593,6 +603,11 @@ FILES:${PN}-xenstored = "\
     ${localstatedir}/lib/xenstored \
     "
 
+FILES:${PN}-oxenstored = "\
+    ${sbindir}/oxenstored \
+    ${sysconfdir}/xen/oxenstored.conf \
+    "
+
 FILES:${PN}-xentrace = "\
     ${bindir}/xentrace \
     ${bindir}/xentrace_setsize \
@@ -738,11 +753,15 @@ SYSTEMD_SERVICE:${PN}-xencommons = " \
     "
 SYSTEMD_SERVICE:${PN}-xendomains = "xendomains.service"
 
+EXTRA_OECONF:remove = " \
+    --disable-ocamltools \
+    "
 EXTRA_OECONF += " \
     --with-systemd=${systemd_unitdir}/system \
     --with-initddir=${INIT_D_DIR} \
     --with-sysconfig-leaf-dir=default \
     --with-system-qemu=${bindir}/qemu-system-i386 \
+    --enable-ocamltools \
     "
 
 do_configure() {
